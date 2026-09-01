@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetinaSetu — Screening Pipeline Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel ="stylesheet" href="style.css">
+</head>
+<body>
+ 
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-text">
+      <h1>RetinaSetu</h1>
+      <p>Quality-aware DR screening pipeline — SIH26038</p>
+    </div>
+  </div>
+</div>
+ 
+<div class="layout">
+  <div class="rail">
+    <div class="rail-title">SCREENING PIPELINE</div>
+    <ul class="steps" id="steps">
+      <li class="step" data-step="patient"><span class="step-dot">1</span><span class="step-label">Patient details</span></li>
+      <li class="step" data-step="upload"><span class="step-dot">2</span><span class="step-label">Upload fundus image</span></li>
+      <li class="step" data-step="quality"><span class="step-dot">3</span><span class="step-label">Image quality check</span><span class="step-sub" id="qualitySub">Good / Poor / Borderline</span></li>
+      <li class="step" data-step="enhance"><span class="step-dot">4</span><span class="step-label">Enhancement</span></li>
+      <li class="step" data-step="analysis"><span class="step-dot">5</span><span class="step-label">Retinal analysis</span></li>
+      <li class="step" data-step="classify"><span class="step-dot">6</span><span class="step-label">DR classification</span></li>
+      <li class="step" data-step="branch">
+        <span class="step-dot">7</span><span class="step-label">Confidence check</span>
+        <div class="branch-row">
+          <span class="branch-pill" id="pillHigh">High → AI explanation</span>
+          <span class="branch-pill" id="pillLow">Low → Doctor review</span>
+        </div>
+      </li>
+      <li class="step" data-step="review"><span class="step-dot">8</span><span class="step-label">Ophthalmologist review</span></li>
+      <li class="step" data-step="decision"><span class="step-dot">9</span><span class="step-label">Screening decision</span></li>
+      <li class="step" data-step="report"><span class="step-dot">10</span><span class="step-label">Final report</span></li>
+    </ul>
+  </div>
+ 
+  <div class="main">
+    <div class="disclaimer" style="border-color:var(--accent);">
+      Not every red flag on a fundus photo is diabetic retinopathy.
+      <button class="ref-toggle" id="refToggleBtn">View conditions that are commonly mistaken for DR</button>
+    </div>
+ 
+    <div class="panel hidden" id="panel-differentials">
+      <span class="kicker">REFERENCE</span>
+      <h2>Conditions that can be mistaken for DR</h2>
+      <p class="desc">A quick screening checklist for the health worker or reviewing ophthalmologist — useful whenever the fundus picture doesn't quite fit a straightforward diabetic pattern. This is background reference, not a diagnosis.</p>
+      <ul class="diff-list" id="diffListRef"></ul>
+    </div>
+ 
+    <!-- STEP 1: PATIENT DETAILS -->
+    <div class="panel" id="panel-patient">
+      <span class="kicker">STEP 1</span>
+      <h2>Patient details</h2>
+ 
+      <div class="field-row3">
+        <div class="field">
+          <label>Full name</label>
+          <input type="text" id="pName" placeholder="e.g. Sunita Devi">
+        </div>
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="pAge" min="1" max="120" placeholder="e.g. 54">
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <select id="pGender">
+            <option value="">Select…</option>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Other</option>
+            <option>Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+ 
+      <div class="field-row3">
+        <div class="field">
+          <label>District</label>
+          <input type="text" id="pDistrict" placeholder="e.g. Lucknow">
+        </div>
+        <div class="field">
+          <label>Town / village</label>
+          <input type="text" id="pTown" placeholder="e.g. Malihabad">
+        </div>
+        <div class="field">
+          <label>Pincode</label>
+          <input type="text" id="pPincode" placeholder="6-digit PIN" maxlength="6" inputmode="numeric">
+        </div>
+      </div>
+ 
+      <div class="field-row3">
+        <div class="field">
+          <label>Known diabetic?</label>
+          <select id="pDiabetic">
+            <option value="">Select…</option>
+            <option>Yes — Type 1</option>
+            <option>Yes — Type 2</option>
+            <option>Not diagnosed diabetic</option>
+            <option>Not sure</option>
+          </select>
+        </div>
+        <div class="field" style="grid-column: span 2;">
+          <label>Aadhaar number <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label>
+          <input type="text" id="pAadhaar" placeholder="XXXX XXXX XXXX" maxlength="14" inputmode="numeric">
+        </div>
+      </div>
+ 
+      <div class="actions-row">
+        <button class="btn" id="patientContinueBtn">Continue to image upload</button>
+      </div>
+      <div class="field-hint" id="patientError" style="color:var(--danger); margin-top:10px;"></div>
+    </div>
+ 
+    <!-- STEP 2: UPLOAD -->
+    <div class="panel hidden" id="panel-upload">
+      <span class="kicker">STEP 2</span>
+      <h2>Upload fundus image</h2>
+      <p class="desc">Load a fundus photo from a portable retinal camera, or generate a synthetic sample to try it without one on hand.</p>
+      <div class="patient-summary" id="patientSummaryBar"></div>
+      <div class="dropzone" id="dropzone" style="margin-top:18px;">
+        <p>Click to choose an image, or drag one in</p>
+        <span>JPG / PNG — captured with a handheld or slit-lamp fundus camera</span>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" class="hidden">
+      <div class="sample-row">
+        <button class="btn secondary btn-sm" data-sample="healthy">Sample: healthy retina</button>
+        <button class="btn secondary btn-sm" data-sample="mild">Sample: mild NPDR</button>
+        <button class="btn secondary btn-sm" data-sample="moderate">Sample: moderate NPDR</button>
+        <button class="btn secondary btn-sm" data-sample="severe">Sample: severe / PDR</button>
+        <button class="btn secondary btn-sm" data-sample="poor">Sample: poor-quality capture</button>
+      </div>
+      <div class="field-hint" id="uploadError" style="color:var(--danger); margin-top:14px;"></div>
+    </div>
+ 
+    <!-- STEPS 3-4: quality + enhancement only -->
+    <div class="panel hidden" id="panel-pipeline">
+      <span class="kicker">STEPS 3–4</span>
+      <h2>Image quality &amp; enhancement</h2>
+      <p class="desc">Case <span class="mono" id="caseIdInline">—</span>. Run the quality gate and enhancement on the uploaded image.</p>
+ 
+      <div class="img-grid">
+        <div>
+          <div class="canvas-frame">
+            <canvas id="cvOriginal" width="300" height="300"></canvas>
+            <div class="canvas-tag" id="cvTag">source image</div>
+          </div>
+          <div class="actions-row">
+            <button class="btn" id="runBtn">Run quality check &amp; enhancement</button>
+            <button class="btn ghost btn-sm" id="resetBtn">Load different image</button>
+            <button class="btn ghost btn-sm" id="newCaseBtn">Start new screening</button>
+          </div>
+        </div>
+        <div class="metrics" id="qualityMetrics">
+          <div class="metric-row"><div class="metric-name">Brightness</div><div class="metric-bar"><div class="metric-fill" id="barBright" style="width:0%"></div></div><div class="metric-val" id="valBright">—</div></div>
+          <div class="metric-row"><div class="metric-name">Contrast</div><div class="metric-bar"><div class="metric-fill" id="barContrast" style="width:0%"></div></div><div class="metric-val" id="valContrast">—</div></div>
+          <div class="metric-row"><div class="metric-name">Sharpness</div><div class="metric-bar"><div class="metric-fill" id="barSharp" style="width:0%"></div></div><div class="metric-val" id="valSharp">—</div></div>
+          <div class="metric-row"><div class="metric-name">Overall quality</div><div class="metric-bar"><div class="metric-fill" id="barQuality" style="width:0%"></div></div><div class="metric-val" id="valQuality">—</div></div>
+          <div id="qualityStatusWrap"></div>
+          <div id="enhanceNote" style="font-size:13px; color:var(--ink-soft); margin-top:4px;"></div>
+        </div>
+      </div>
+ 
+      <div id="analysisSection" class="hidden" style="margin-top:28px; border-top:1px solid var(--line); padding-top:24px;">
+        <h3 style="font-size:16px; margin-bottom:14px;">Enhanced image</h3>
+        <div class="canvas-frame" style="width:220px; height:220px;">
+          <canvas id="cvEnhanced" width="220" height="220" style="width:220px;height:220px;"></canvas>
+          <div class="canvas-tag">enhanced image</div>
+        </div>
+      </div>
+    </div>
+ 
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
+ 
